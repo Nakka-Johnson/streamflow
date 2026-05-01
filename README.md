@@ -16,28 +16,29 @@ and the failover runbook are tracked in [`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Architecture
 
-Producer Service (Spring Boot, Java 17)
-                          acks=all
-                          enable.idempotence=true
-                          partition by tenantId
-                                 |
-                                 v
-    +--------------------------------------------------+
-    |  PRIMARY CLUSTER (us-east), 3 brokers, KRaft     |
-    |  topic: events, partitions: 6, RF: 3             |
-    +--------------------------------------------------+
-                                 |
-                                 v
-                Consumer Service (Spring Boot, Java 17)
-                          manual offset commit
-                          DLQ on processing failure
-                          exponential backoff retry
+The system implements a **passive-active multi-region topology** designed for regional fault tolerance and strict data consistency.
+```mermaid
+graph TD
+    subgraph "Region: US-EAST (Primary)"
+        P[Producer Service] -->|acks=all| PC[Primary Cluster]
+        PC -->|Topic: events| C[Consumer Service]
+        C -->|Manual Ack| PC
+        C -->|Retry Exhausted| DLQ[Dead Letter Topic]
+    end
 
-    +--------------------------------------------------+
-    |  SECONDARY CLUSTER (us-west), 3 brokers, KRaft   |
-    |  awaiting MirrorMaker 2 in next phase            |
-    +--------------------------------------------------+
+    subgraph "Data Replication"
+        PC -.->|MirrorMaker 2| SC[Secondary Cluster]
+    end
 
+    subgraph "Region: US-WEST (Secondary)"
+        SC
+        P2[Producer - standby]
+    end
+
+    style P fill:#f9f,stroke:#333,stroke-width:2px
+    style C fill:#bbf,stroke:#333,stroke-width:2px
+    style PC fill:#dfd,stroke:#333,stroke-width:4px
+    style SC fill:#eee,stroke:#333,stroke-dasharray: 5 5
 
 
 ## Design decisions
