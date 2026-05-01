@@ -1,0 +1,23 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: streamflow-consumer
+
+streamflow:
+  consumer:
+    bootstrap-servers: localhost:9092,localhost:9192,localhost:9292
+    topic: events
+    group-id: streamflow-consumer-group
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus, metrics
+
+logging:
+  level:
+    org.apache.kafka: WARN
+    com.streamflow: INFO

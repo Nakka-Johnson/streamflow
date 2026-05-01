@@ -1,0 +1,28 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: streamflow-producer
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9192,localhost:9292
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus, metrics
+  endpoint:
+    prometheus:
+      enabled: true
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: streamflow-producer
+      cluster: us-east
+
+logging:
+  level:
+    org.apache.kafka: WARN
+    com.streamflow: DEBUG

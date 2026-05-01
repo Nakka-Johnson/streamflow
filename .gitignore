@@ -1,0 +1,19 @@
+cat > .gitignore << 'EOF'
+target/
+*.class
+*.jar
+*.war
+.idea/
+.vscode/
+*.iml
+.DS_Store
+.mvn/
+mvnw
+mvnw.cmd
+.gradle/
+build/
+logs/
+*.log
+.env
+.env.local
+EOF
