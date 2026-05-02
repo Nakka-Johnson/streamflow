@@ -30,7 +30,7 @@ The system implements a **passive-active multi-region topology** designed for re
 graph TD
     subgraph "Region: US-EAST - Primary"
         P[Producer Service] -->|acks=all| PC[Primary Cluster - 3 brokers KRaft]
-        PC -->|Topic: us-east.events| C[Consumer Service]
+        PC -->|Topic: events| C[Consumer Service]
         C -->|Manual Ack| PC
         C -->|Retry Exhausted| DLQ[Dead Letter Topic]
     end
@@ -43,7 +43,7 @@ graph TD
         SC[Secondary Cluster - 3 brokers KRaft]
     end
 
-    PC -->|replicates us-east.events| MM2
+    PC -->|replicates events/transactions/audit (as us-east.*)| MM2
     MM2 --> SC
 
     style P fill:#f9f,stroke:#333,stroke-width:2px
@@ -144,6 +144,45 @@ mvn spring-boot:run
 
 You should see the consumer log the event within seconds of publishing.
 
+## Cross-cluster replication via MirrorMaker 2
+
+MM2 runs in standalone mode inside the secondary cluster, replicating
+`events`, `transactions`, and `audit` topics from primary to secondary.
+The secondary cluster sees them as `us-east.events`, etc., with the source
+cluster alias prefixed.
+
+Three connectors are configured:
+
+- **MirrorSourceConnector**: replicates topic data
+- **MirrorCheckpointConnector**: translates consumer offsets across clusters
+- **MirrorHeartbeatConnector**: emits liveness signals on both clusters
+
+Start MM2 after the clusters are up and topics exist:
+
+```bash
+./scripts/start-mm2.sh
+```
+
+Verify replication by sending an event to the producer (which writes to
+primary) and consuming from `us-east.events` on the secondary:
+
+```bash
+docker exec secondary-broker-1 /opt/kafka/bin/kafka-console-consumer.sh \
+  --bootstrap-server secondary-broker-1:19092 \
+  --topic us-east.events --from-beginning --max-messages 5 --timeout-ms 10000
+```
+
+### Failover demonstration
+
+```bash
+./scripts/simulate-failover.sh
+```
+
+This script stops the primary cluster, verifies the secondary is still
+healthy, and consumes the replicated data from secondary to prove DR
+readiness. See [`docs/FAILOVER_RUNBOOK.md`](docs/FAILOVER_RUNBOOK.md)
+for the full operational procedure.
+
 ## Repo layout
 
 streamflow/
@@ -166,4 +205,4 @@ Prometheus + Grafana observability, Testcontainers integration tests.
 
 - [Apache Kafka MirrorMaker 2 documentation](https://kafka.apache.org/41/operations/geo-replication-cross-cluster-data-mirroring/)
 - Kafka: The Definitive Guide, Chapter 8 (Cross-Cluster Data Mirroring)
-- [KIP-382: MirrorMaker 2.0](https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0)# streamflow
+- [KIP-382: MirrorMaker 2.0](https://cwiki.apache.org/confluence/display/KAFKA/KIP-382%3A+MirrorMaker+2.0)
