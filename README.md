@@ -11,10 +11,14 @@ cluster fails.
 
 ## Status
 
-This project is built in phases. The current state covers two-cluster
-topology, idempotent producer, and consumer with manual offset commit
-and dead-letter routing. Cross-cluster replication via MirrorMaker 2
-and the failover runbook are tracked in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+This project is built in phases. Phases 1 and 2 are complete: two-cluster
+topology, idempotent producer, manual-ack consumer with DLQ routing, and
+MirrorMaker 2 cross-cluster replication with failover demonstration.
+Phase 3 (Prometheus + Grafana observability and Testcontainers integration
+tests) is tracked in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for design decisions
+and [`docs/FAILOVER_RUNBOOK.md`](docs/FAILOVER_RUNBOOK.md) for the operational runbook.
 
 ---
 
@@ -25,20 +29,22 @@ The system implements a **passive-active multi-region topology** designed for re
 ```mermaid
 graph TD
     subgraph "Region: US-EAST (Primary)"
-        P[Producer Service] -->|acks=all| PC[Primary Cluster]
-        PC -->|Topic: events| C[Consumer Service]
+        P[Producer Service] -->|acks=all| PC[Primary Cluster (3 brokers, KRaft)]
+        PC -->|Topic: us-east.events| C[Consumer Service]
         C -->|Manual Ack| PC
         C -->|Retry Exhausted| DLQ[Dead Letter Topic]
     end
 
-    subgraph "Data Replication"
-        PC -.->|MirrorMaker 2| SC[Secondary Cluster]
+    subgraph "Replication Layer"
+        MM2[MirrorMaker 2]
     end
 
     subgraph "Region: US-WEST (Secondary)"
-        SC
-        P2[Producer - standby]
+        SC[Secondary Cluster (3 brokers, KRaft)]
     end
+
+    PC -->|replicates us-east.events| MM2
+    MM2 --> SC
 
     style P fill:#f9f,stroke:#333,stroke-width:2px
     style C fill:#bbf,stroke:#333,stroke-width:2px
