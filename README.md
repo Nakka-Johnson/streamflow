@@ -28,8 +28,8 @@ The system implements a **passive-active multi-region topology** designed for re
 
 ```mermaid
 graph TD
-    subgraph "Region: US-EAST (Primary)"
-        P[Producer Service] -->|acks=all| PC[Primary Cluster (3 brokers, KRaft)]
+    subgraph "Region: US-EAST - Primary"
+        P[Producer Service] -->|acks=all| PC[Primary Cluster - 3 brokers KRaft]
         PC -->|Topic: us-east.events| C[Consumer Service]
         C -->|Manual Ack| PC
         C -->|Retry Exhausted| DLQ[Dead Letter Topic]
@@ -39,8 +39,8 @@ graph TD
         MM2[MirrorMaker 2]
     end
 
-    subgraph "Region: US-WEST (Secondary)"
-        SC[Secondary Cluster (3 brokers, KRaft)]
+    subgraph "Region: US-WEST - Secondary"
+        SC[Secondary Cluster - 3 brokers KRaft]
     end
 
     PC -->|replicates us-east.events| MM2
