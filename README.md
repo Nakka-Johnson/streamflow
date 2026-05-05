@@ -229,18 +229,17 @@ Tests cover:
 The GitHub Actions workflow at `.github/workflows/build.yml` runs both
 test suites on every push to main.
 
-## Repo layout
+## Repo Layout
 
+```text
 streamflow/
-├── docker/
+├── docker/             # Multi-cluster docker-compose configurations
 │   └── docker-compose.yml
-├── producer/                   Spring Boot producer service
-├── consumer/                   Spring Boot consumer with manual ack and DLQ
-├── scripts/
-│   └── create-topics.sh
-└── docs/                        Architecture and roadmap (in progress)
-
-
+├── producer/           # Spring Boot producer service (Java 17)
+├── consumer/           # Resilient consumer with manual ack and DLQ
+├── scripts/            # Topic initialization and maintenance scripts
+└── docs/               # Architecture and roadmap (in progress)
+```
 ## What's next
 
 See [`docs/ROADMAP.md`](docs/ROADMAP.md) for future work ideas and extensions.
