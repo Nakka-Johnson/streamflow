@@ -1,4 +1,5 @@
 # StreamFlow
+[![Build and Test](https://github.com/Nakka-Johnson/streamflow/actions/workflows/build.yml/badge.svg)](https://github.com/Nakka-Johnson/streamflow/actions/workflows/build.yml)
 
 > Cross-region Kafka streaming reference implementation in Java 17 + Spring Boot. Two-cluster topology, idempotent producer, manual-ack consumer with DLQ routing.
 
@@ -11,14 +12,13 @@ cluster fails.
 
 ## Status
 
-This project is built in phases. Phases 1 and 2 are complete: two-cluster
-topology, idempotent producer, manual-ack consumer with DLQ routing, and
-MirrorMaker 2 cross-cluster replication with failover demonstration.
-Phase 3 (Prometheus + Grafana observability and Testcontainers integration
-tests) is tracked in [`docs/ROADMAP.md`](docs/ROADMAP.md).
+All three planned phases are complete: two-cluster topology with idempotent
+producer and manual-ack consumer (Phase 1), MirrorMaker 2 cross-cluster
+replication with failover demonstration (Phase 2), and Prometheus + Grafana
+observability with embedded Kafka integration tests (Phase 3).
 
-See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for design decisions
-and [`docs/FAILOVER_RUNBOOK.md`](docs/FAILOVER_RUNBOOK.md) for the operational runbook.
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for design decisions and
+[`docs/FAILOVER_RUNBOOK.md`](docs/FAILOVER_RUNBOOK.md) for the operational runbook.
 
 ---
 
@@ -183,6 +183,52 @@ healthy, and consumes the replicated data from secondary to prove DR
 readiness. See [`docs/FAILOVER_RUNBOOK.md`](docs/FAILOVER_RUNBOOK.md)
 for the full operational procedure.
 
+## Observability
+
+Both producer and consumer expose Prometheus metrics at `/actuator/prometheus`.
+A Grafana dashboard visualises throughput, latency percentiles (p50/p95/p99),
+and failure counters across both services.
+
+![StreamFlow dashboard](docs/images/dashboard.png)
+
+### Bring up Prometheus and Grafana
+
+```bash
+docker compose -f docker/docker-compose.yml up -d prometheus grafana
+```
+
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000 (admin/admin)
+
+The Prometheus targets page (Status -> Targets) should show both services as
+UP once the producer and consumer apps are running.
+
+### Generate load for the dashboard
+
+```bash
+./scripts/load-test.sh 1000 50    # 1000 events at 50/sec
+```
+
+## Testing
+
+Both modules ship with integration tests that use an embedded Kafka broker
+(via `spring-kafka-test`), so `mvn test` runs without Docker:
+
+```bash
+cd producer && mvn test
+cd consumer && mvn test
+```
+
+Tests cover:
+
+- Producer: single-event publish, partition-key consistency for the same
+  tenant, end-to-end round trip
+- Consumer: end-to-end processing of published events through the
+  Spring Kafka listener with manual offset commit
+
+The GitHub Actions workflow at `.github/workflows/build.yml` runs both
+test suites on every push to main.
+
 ## Repo layout
 
 streamflow/
@@ -197,9 +243,36 @@ streamflow/
 
 ## What's next
 
-See [`docs/ROADMAP.md`](docs/ROADMAP.md) for the planned phases:
-MirrorMaker 2 cross-cluster replication, failover simulation,
-Prometheus + Grafana observability, Testcontainers integration tests.
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for future work ideas and extensions.
+
+## What I learned building this
+
+A few things that surprised me, in case they're useful to anyone reading this code:
+
+1. **Consumer lag is not a single number.** It is per partition. A healthy
+  aggregate lag can hide a single stuck partition. Per-partition tracking
+  is the only way to catch this early.
+
+2. **MM2 replication lag is mostly polling, not network.** The default
+  `refresh.topics.interval.seconds` is 600. For development, dropping it
+  to 30 makes the system feel responsive. For production the trade-off is
+  metadata churn vs faster topic detection.
+
+3. **`max.poll.records` matters more than you would expect.** If a single
+  poll returns 500 records and processing each takes 50ms, the consumer
+  spends 25 seconds before the next heartbeat. With the default 30s
+  session timeout, you are one slow batch away from being kicked out
+  of the group. Either lower `max.poll.records` or raise
+  `max.poll.interval.ms`.
+
+4. **Offset translation is best-effort.** MM2's checkpoint connector
+  writes translations periodically. If the primary fails between
+  checkpoints, the secondary's last known offset for a consumer group
+  may be slightly behind. The system has to be designed to handle small
+  windows of reprocessing.
+
+5. **Embedded Kafka tests are a pragmatic default.** `spring-kafka-test` keeps
+  the test workflow Docker-free while still exercising real broker behaviour.
 
 ## References
 

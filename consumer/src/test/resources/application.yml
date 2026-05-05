@@ -1,0 +1,18 @@
+server:
+  port: 0
+
+spring:
+  application:
+    name: streamflow-consumer-test
+
+streamflow:
+  consumer:
+    bootstrap-servers: ${TEST_KAFKA_BOOTSTRAP:localhost:9092}
+    topic: events
+    group-id: test-consumer-group
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus, metrics

@@ -1,4 +1,4 @@
-package main.java.com.streamflow.consumer;
+package com.streamflow.consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;

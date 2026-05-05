@@ -1,4 +1,3 @@
-cat > .gitignore << 'EOF'
 target/
 *.class
 *.jar
@@ -16,4 +15,4 @@ logs/
 *.log
 .env
 .env.local
-EOF
+

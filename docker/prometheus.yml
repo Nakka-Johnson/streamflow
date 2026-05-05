@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+scrape_configs:
+  - job_name: 'streamflow-producer'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8080']
+        labels:
+          service: producer
+          cluster: us-east
+
+  - job_name: 'streamflow-consumer'
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ['host.docker.internal:8081']
+        labels:
+          service: consumer
+          cluster: us-east

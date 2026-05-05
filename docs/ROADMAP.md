@@ -1,4 +1,3 @@
-cat > docs/ROADMAP.md << 'EOF'
 # Roadmap
 
 ## Phase 1: Foundation (complete)
@@ -15,9 +14,17 @@ cat > docs/ROADMAP.md << 'EOF'
 - [x] Failover runbook documentation
 - [x] Architecture deep-dive document
 
-## Phase 3: Observability and Quality (planned)
-- [ ] Prometheus + Grafana with broker, producer, consumer dashboards
-- [ ] Per-partition consumer lag monitoring
-- [ ] Testcontainers integration tests
-- [ ] Load testing scripts
-EOF
+## Phase 3: Observability and Quality (complete)
+- [x] Prometheus + Grafana with producer and consumer dashboards
+- [x] Embedded Kafka integration tests for producer and consumer
+- [x] GitHub Actions CI workflow
+- [x] Load testing script
+- [x] README polish with screenshots and CI badge
+
+## Future work (not planned for current scope)
+- Kafka broker JMX metrics via custom Dockerfile + JMX Prometheus agent
+- Schema Registry + Avro for schema evolution
+- Active-active replication topology with conflict resolution
+- Automated chaos testing (kill a broker mid-replication)
+- mTLS authentication between brokers and clients
+- Cluster Linking comparison once available outside Confluent Cloud

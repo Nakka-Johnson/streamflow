@@ -1,4 +1,4 @@
-package main.java.com.streamflow.consumer;
+package com.streamflow.consumer;
 
 import java.util.HashMap;
 import java.util.Map;

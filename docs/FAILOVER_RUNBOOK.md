@@ -1,4 +1,3 @@
-cat > docs/FAILOVER_RUNBOOK.md << 'EOF'
 # Failover Runbook
 
 What to do when the primary Kafka cluster goes down.
@@ -86,4 +85,4 @@ During an active failover:
 - Practice DR drills should follow this runbook exactly so the muscle memory exists when it matters
 - A real production incident may require deviation; document the deviation in the postmortem
 - If you are unsure whether to failover, escalate to whoever owns the data platform on-call rotation
-EOF
+
