@@ -43,13 +43,13 @@ graph TD
         SC[Secondary Cluster - 3 brokers KRaft]
     end
 
-    PC -->|replicates events/transactions/audit (as us-east.*)| MM2
+    PC -->|"replicates events/transactions/audit (as us-east.*)"| MM2
     MM2 --> SC
 
     style P fill:#f9f,stroke:#333,stroke-width:2px
     style C fill:#bbf,stroke:#333,stroke-width:2px
     style PC fill:#dfd,stroke:#333,stroke-width:4px
-    style SC fill:#eee,stroke:#333,stroke-dasharray: 5 5
+    style SC fill:#eee,stroke:#333,stroke-dasharray:5
 ```
 
 
